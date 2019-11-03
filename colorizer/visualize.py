@@ -156,6 +156,7 @@ class ModelImageVisualizer:
         rows = rows if rows * columns == num_images else rows + 1
         return rows, columns
 
+
 def get_image_colorizer(
     render_factor: int = 35, artistic: bool = True
 ) -> ModelImageVisualizer:
