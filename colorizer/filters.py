@@ -77,7 +77,7 @@ class ColorizerFilter(BaseFilter):
             return self._post_process(model_image, filtered_image)
 
     def _transform(self, image: PilImage) -> PilImage:
-        return image.convert('LA').convert('RGB')
+        return image.convert("LA").convert("RGB")
 
     # This takes advantage of the fact that human eyes are much less sensitive to
     # imperfections in chrominance compared to luminance.  This means we can

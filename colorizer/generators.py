@@ -69,7 +69,7 @@ def unet_learner_wide(
         data.device,
     )
     learn = Learner(data, model, **kwargs)
-    learn.split(ifnone(split_on, meta['split']))
+    learn.split(ifnone(split_on, meta["split"]))
     if pretrained:
         learn.freeze()
     apply_init(model[2], nn.init.kaiming_normal_)
@@ -143,7 +143,7 @@ def unet_learner_deep(
         data.device,
     )
     learn = Learner(data, model, **kwargs)
-    learn.split(ifnone(split_on, meta['split']))
+    learn.split(ifnone(split_on, meta["split"]))
     if pretrained:
         learn.freeze()
     apply_init(model[2], nn.init.kaiming_normal_)

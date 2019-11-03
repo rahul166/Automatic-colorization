@@ -30,17 +30,17 @@ class ModelImageVisualizer:
         # gc.collect()
 
     def _open_pil_image(self, path: Path) -> Image:
-        return PIL.Image.open(path).convert('RGB')
+        return PIL.Image.open(path).convert("RGB")
 
     def _get_image_from_url(self, url: str) -> Image:
         response = requests.get(url, timeout=30)
-        img = PIL.Image.open(BytesIO(response.content)).convert('RGB')
+        img = PIL.Image.open(BytesIO(response.content)).convert("RGB")
         return img
 
     def plot_transformed_image_from_url(
         self,
         url: str,
-        path: str = 'test_images/image.png',
+        path: str = "test_images/image.png",
         figsize: (int, int) = (20, 20),
         render_factor: int = None,
         display_render_factor: bool = False,
@@ -140,14 +140,14 @@ class ModelImageVisualizer:
         if axes is None:
             _, axes = plt.subplots(figsize=figsize)
         axes.imshow(np.asarray(image) / 255)
-        axes.axis('off')
+        axes.axis("off")
         if render_factor is not None and display_render_factor:
             plt.text(
                 10,
                 10,
-                'render_factor: ' + str(render_factor),
-                color='white',
-                backgroundcolor='black',
+                "render_factor: " + str(render_factor),
+                color="white",
+                backgroundcolor="black",
             )
 
     def _get_num_rows_columns(self, num_images: int, max_columns: int) -> (int, int):
@@ -160,7 +160,7 @@ class ModelImageVisualizer:
 class VideoColorizer:
     def __init__(self, vis: ModelImageVisualizer):
         self.vis = vis
-        workfolder = Path('./video')
+        workfolder = Path("./video")
         self.source_folder = workfolder / "source"
         self.bwframes_root = workfolder / "bwframes"
         self.audio_root = workfolder / "audio"
@@ -169,35 +169,35 @@ class VideoColorizer:
 
     def _purge_images(self, dir):
         for f in os.listdir(dir):
-            if re.search('.*?\.jpg', f):
+            if re.search(".*?\.jpg", f):
                 os.remove(os.path.join(dir, f))
 
     def _get_fps(self, source_path: Path) -> str:
         probe = ffmpeg.probe(str(source_path))
         stream_data = next(
-            (stream for stream in probe['streams'] if stream['codec_type'] == 'video'),
+            (stream for stream in probe["streams"] if stream["codec_type"] == "video"),
             None,
         )
-        return stream_data['avg_frame_rate']
+        return stream_data["avg_frame_rate"]
 
     def _download_video_from_url(self, source_url, source_path: Path):
         if source_path.exists():
             source_path.unlink()
 
         ydl_opts = {
-            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4',
-            'outtmpl': str(source_path),
+            "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4",
+            "outtmpl": str(source_path),
         }
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             ydl.download([source_url])
 
     def _extract_raw_frames(self, source_path: Path):
         bwframes_folder = self.bwframes_root / (source_path.stem)
-        bwframe_path_template = str(bwframes_folder / '%5d.jpg')
+        bwframe_path_template = str(bwframes_folder / "%5d.jpg")
         bwframes_folder.mkdir(parents=True, exist_ok=True)
         self._purge_images(bwframes_folder)
         ffmpeg.input(str(source_path)).output(
-            str(bwframe_path_template), format='image2', vcodec='mjpeg', qscale=0
+            str(bwframe_path_template), format="image2", vcodec="mjpeg", qscale=0
         ).run(capture_stdout=True)
 
     def _colorize_raw_frames(self, source_path: Path, render_factor: int = None):
@@ -216,10 +216,10 @@ class VideoColorizer:
 
     def _build_video(self, source_path: Path) -> Path:
         colorized_path = self.result_folder / (
-            source_path.name.replace('.mp4', '_no_audio.mp4')
+            source_path.name.replace(".mp4", "_no_audio.mp4")
         )
         colorframes_folder = self.colorframes_root / (source_path.stem)
-        colorframes_path_template = str(colorframes_folder / '%5d.jpg')
+        colorframes_path_template = str(colorframes_folder / "%5d.jpg")
         colorized_path.parent.mkdir(parents=True, exist_ok=True)
         if colorized_path.exists():
             colorized_path.unlink()
@@ -227,10 +227,10 @@ class VideoColorizer:
 
         ffmpeg.input(
             str(colorframes_path_template),
-            format='image2',
-            vcodec='mjpeg',
+            format="image2",
+            vcodec="mjpeg",
             framerate=fps,
-        ).output(str(colorized_path), crf=17, vcodec='libx264').run(capture_stdout=True)
+        ).output(str(colorized_path), crf=17, vcodec="libx264").run(capture_stdout=True)
 
         result_path = self.result_folder / source_path.name
         if result_path.exists():
@@ -239,7 +239,7 @@ class VideoColorizer:
         shutil.copyfile(str(colorized_path), str(result_path))
 
         # adding back sound here
-        audio_file = Path(str(source_path).replace('.mp4', '.aac'))
+        audio_file = Path(str(source_path).replace(".mp4", ".aac"))
         if audio_file.exists():
             audio_file.unlink()
 
@@ -261,7 +261,7 @@ class VideoColorizer:
                 + str(result_path)
                 + '"'
             )
-        print('Video created here: ' + str(result_path))
+        print("Video created here: " + str(result_path))
         return result_path
 
     def colorize_from_url(
@@ -280,7 +280,7 @@ class VideoColorizer:
     def _colorize_from_path(self, source_path: Path, render_factor: int = None) -> Path:
         if not source_path.exists():
             raise Exception(
-                'Video at path specfied, ' + str(source_path) + ' could not be found.'
+                "Video at path specfied, " + str(source_path) + " could not be found."
             )
 
         self._extract_raw_frames(source_path)
@@ -293,9 +293,9 @@ def get_video_colorizer(render_factor: int = 21) -> VideoColorizer:
 
 
 def get_stable_video_colorizer(
-    root_folder: Path = Path('./'),
-    weights_name: str = 'ColorizeVideo_gen',
-    results_dir='result_images',
+    root_folder: Path = Path("./"),
+    weights_name: str = "ColorizeVideo_gen",
+    results_dir="result_images",
     render_factor: int = 21,
 ) -> VideoColorizer:
     learn = gen_inference_wide(root_folder=root_folder, weights_name=weights_name)
@@ -314,9 +314,9 @@ def get_image_colorizer(
 
 
 def get_stable_image_colorizer(
-    root_folder: Path = Path('./'),
-    weights_name: str = 'ColorizeStable_gen',
-    results_dir='result_images',
+    root_folder: Path = Path("./"),
+    weights_name: str = "ColorizeStable_gen",
+    results_dir="result_images",
     render_factor: int = 35,
 ) -> ModelImageVisualizer:
     learn = gen_inference_wide(root_folder=root_folder, weights_name=weights_name)
@@ -326,9 +326,9 @@ def get_stable_image_colorizer(
 
 
 def get_artistic_image_colorizer(
-    root_folder: Path = Path('./'),
-    weights_name: str = 'ColorizeArtistic_gen',
-    results_dir='result_images',
+    root_folder: Path = Path("./"),
+    weights_name: str = "ColorizeArtistic_gen",
+    results_dir="result_images",
     render_factor: int = 35,
 ) -> ModelImageVisualizer:
     learn = gen_inference_deep(root_folder=root_folder, weights_name=weights_name)
@@ -342,15 +342,15 @@ def show_image_in_notebook(image_path: Path):
 
 
 def show_video_in_notebook(video_path: Path):
-    video = io.open(video_path, 'r+b').read()
+    video = io.open(video_path, "r+b").read()
     encoded = base64.b64encode(video)
     ipythondisplay.display(
         HTML(
-            data='''<video alt="test" autoplay 
+            data="""<video alt="test" autoplay 
                 loop controls style="height: 400px;">
                 <source src="data:video/mp4;base64,{0}" type="video/mp4" />
-             </video>'''.format(
-                encoded.decode('ascii')
+             </video>""".format(
+                encoded.decode("ascii")
             )
         )
     )
